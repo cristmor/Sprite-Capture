@@ -1,0 +1,3 @@
+CompileFlags:
+	Add: -I/home/cristmor/dev/cpp/SpriteCapture/imgui
+	Add: -I/home/cristmor/dev/cpp/SpriteCapture/imgui-sfml
