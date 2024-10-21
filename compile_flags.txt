@@ -1,4 +1,0 @@
--I/home/cristmor/dev/cpp/SpriteCapture/deps/imgui/
--I/home/cristmor/dev/cpp/SpriteCapture/deps/imgui-sfml/
--I/home/cristmor/dev/cpp/SpriteCapture/src/
-

@@ -1,0 +1,12 @@
+bin/
+deps/
+
+.cache/
+.clang
+
+Makefile
+compile_commands.json
+build-run.sh
+imgui.ini
+SpriteCapture.make
+*.txt
