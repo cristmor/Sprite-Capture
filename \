@@ -1,0 +1,266 @@
+#include "Interface.h"
+#include "imgui_internal.h"
+
+Interface::Interface() {
+}
+
+Interface::~Interface() {
+	ImGui::SFML::Shutdown();
+}
+
+void Interface::update() {
+	auto& window = AppState::getInstance().window();
+
+	// Start of Imgui UI
+	ImGui::SFML::Update(*window, mClock.restart());
+	ImGui::SetNextWindowPos(mPos);
+	ImGui::SetNextWindowSize(mSize);
+	ImGui::Begin("Control Panel");
+
+	// App State Variables
+	std::vector<const char*> filenames = AppState::getInstance().filenames();
+	std::vector<std::filesystem::path> paths = AppState::getInstance().paths();
+	sf::Texture texture = AppState::getInstance().texture();
+
+
+	imageSelectionUI();
+	boxSettingUI();
+	boundingBoxUI();
+	dataValuesUI();
+
+	//
+	// Output File
+	//
+	ImGui::SeparatorText("Output File");
+
+	static std::string fileContents;
+	static std::string updateBuffer;
+	static std::vector<char> textBuffer;
+	
+
+	// End of Imgui UI
+	ImGui::End();
+}
+
+void Interface::imageSelectionUI() {
+	auto& filenames = AppState::getInstance().filenames();
+	auto& paths = AppState::getInstance().paths();
+	auto& texture = AppState::getInstance().texture();
+	if(!filenames.empty()) {
+		if(ImGui::Combo("Selected File", &fileIndex, filenames.data(), filenames.size())) {
+			texture.loadFromFile(paths[fileIndex].string());
+		}
+	}
+}
+
+void Interface::boxSettingUI() {
+	ImGui::SeparatorText("Box Settings");
+
+	// Size Options
+	enum sizeOptions {Size_8, Size_12, Size_16, Size_32, Size_48, Size_64, Size_COUNT};
+	static int sizeIndex = Size_8;
+	const char* sizeNames[Size_COUNT] = {"8x8 Pixels", "12x12 Pixels", "16x16 Pixels", "32x32 Pixels", "48x48 Pixels", "64x64 Pixels"};
+	const char* sizeName = (sizeIndex >=0 && sizeIndex < Size_COUNT) ? sizeNames[sizeIndex]: "Size Unknowm";
+
+	if(ImGui::SliderInt("Frame Size/Sprite Size", &sizeIndex, 0, Size_COUNT - 1, sizeName)) {
+		switch (sizeIndex) {
+			case Size_8:
+				output.size = 8;
+				break;
+			case Size_12:
+				output.size = 12;
+				break;
+			case Size_16:
+				output.size = 16;
+				break;
+			case Size_32:
+				output.size = 32;
+				break;
+			case Size_48:
+				output.size = 48;
+				break;
+			case Size_64:
+				output.size = 64;
+				break;
+		}
+		rect.setSize({ static_cast<float>(output.size * scale), static_cast<float>(output.size * scale) });
+	}
+
+	// Box Row and Column
+	static int row = 1;
+	static int column = 1;
+	static int maxRow;
+	static int maxColumn;
+	maxRow = (texture.getSize().y * scale)/(rect.getSize().y);
+	maxColumn = (texture.getSize().x * scale)/(rect.getSize().x);
+	if(!maxRow) {
+		maxRow = 1;
+	}
+	if(!maxColumn) {
+		maxColumn = 1;
+	}
+
+	ImGui::SliderInt("Set Row", &row, 1, maxRow);
+	ImGui::SliderInt("Set Column", &column, 1, maxColumn);
+
+	// Box Splits
+	ImGui::SliderInt("Set Splits", &splits, 1, 10);
+
+	static bool fullWidth = false;
+	static bool fullHeight = false;
+	ImGui::Checkbox("Full Width", &fullWidth);
+	ImGui::Checkbox("Full Height", &fullHeight);
+
+	// Reset Button
+	if(ImGui::Button("Reset")) {
+		rect.setPosition({ 0,0 });
+		rect.setSize({ output.size * scale, output.size * scale });
+		row = 1;
+		column = 1;
+		fullWidth = false;
+		fullHeight = false;
+		splits = 1;
+	}
+
+	// Data
+	output.row = row;
+	rect.setPosition({ (output.size * scale) * (column - 1), (output.size * scale) * (row - 1) });
+	rect.setSize({ (output.size * scale), (output.size * scale)});
+	if(fullWidth) {
+		rect.setSize({ texture.getSize().x * scale, rect.getSize().y });
+	}
+	if(fullHeight) {
+		rect.setSize({ rect.getSize().x, texture.getSize().y * scale });
+	}
+	for(int i = 1; i <= splits;i++) {
+		rects[i-1].setPosition(rect.getPosition());
+		rects[i-1].setSize({(rect.getSize().x/splits)*i, rect.getSize().y});
+	}
+}
+
+void Interface::boundingBoxUI() {
+	ImGui::SeparatorText("Bounding Box");
+
+	static int pos[2] = {0};
+	static int boundingSize[2] = {0};
+
+	ImGui::SetNextItemWidth(100);
+	ImGui::DragInt(":x Offset", &pos[0]);
+	ImGui::SameLine();
+	ImGui::SetNextItemWidth(100);
+	ImGui::DragInt(":y Offset", &pos[1]);
+
+	ImGui::SetNextItemWidth(100);
+	ImGui::DragInt(":x Size", &boundingSize[0]);
+	ImGui::SameLine();
+	ImGui::SetNextItemWidth(100);
+	ImGui::DragInt(":y Size", &boundingSize[1]);
+
+	boundingBox.setOrigin({boundingBox.getSize().x/2.0f, boundingBox.getSize().y/2.0f});
+	boundingBox.setPosition({rect.getPosition().x + rect.getSize().x/(2.0f * splits) + pos[0], rect.getPosition().y + rect.getSize().y/2.0f + pos[1]});
+	boundingBox.setSize({static_cast<float>(boundingSize[0]), static_cast<float>(boundingSize[1])});
+}
+
+void Interface::dataValuesUI() {
+	ImGui::SeparatorText("Output Values");
+
+	output.count= splits;
+
+	char buf[32];
+
+	std::strncpy(buf, output.textureTag.c_str(), 32);
+	ImGui::InputText("Texture Tag", buf, IM_ARRAYSIZE(buf));
+	output.textureTag = buf;
+
+	std::strncpy(buf, output.animationTag.c_str(), 32);
+	ImGui::InputText("Animaiton Tag", buf, IM_ARRAYSIZE(buf));
+	output.animationTag = buf;
+
+	ImGui::InputInt("Speed", &output.speed);
+
+	std::string condition = ((outputFile.is_open()) ? "(Opened)": "(Closed)");
+	std::strncpy(buf, outputFilename.c_str(), 32);
+	ImGui::InputText(("Output File " + condition).c_str(), buf, IM_ARRAYSIZE(buf));
+	outputFilename = buf;
+
+	if(ImGui::Button("Open File")) {
+		outputFile.open(outputFilename, std::ios::app);
+	}
+	ImGui::SameLine();
+	if(ImGui::Button("Append File")) {
+		if(!outputFile.is_open()) {
+			outputFile.open(outputFilename, std::ios::app);
+			outputFile << output.textureTag << " "
+				   << output.animationTag << " "
+				   << output.count << " "
+				   << output.speed << " "
+				   << output.size << " "
+				   << output.row << " "
+				   << output.column << " "
+				   << boundingBox.getSize().x/scale << " "
+				   << boundingBox.getSize().y/scale << " "
+				   << ((splits) ? (boundingBox.getPosition().x - (rect.getPosition().x + rect.getSize().x/(2.0f * splits)))/scale : 0) << " "
+				   << (boundingBox.getPosition().y - (rect.getPosition().y + rect.getSize().y/2.0f))/scale << " "
+				   << paths[fileIndex].string() << std::endl;
+
+		}
+		else {
+			outputFile << output.textureTag << " "
+				   << output.animationTag << " "
+				   << output.count << " "
+				   << output.speed << " "
+				   << output.size << " "
+				   << output.row << " "
+				   << output.column << " "
+				   << boundingBox.getSize().x/scale << " "
+				   << boundingBox.getSize().y/scale << " "
+				   << ((splits) ? (boundingBox.getPosition().x - (rect.getPosition().x + rect.getSize().x/(2.0f * splits)))/scale : 0) << " "
+				   << (boundingBox.getPosition().y - (rect.getPosition().y + rect.getSize().y/2.0f))/scale << " "
+				   << paths[fileIndex].string() << std::endl;
+		}
+	}
+	ImGui::SameLine();
+	if(ImGui::Button("Clear File")) {
+		if(outputFile.is_open()) {
+			outputFile.close();
+			outputFile.open(outputFilename);
+			outputFile.close();
+			outputFile.open(outputFilename, std::ios::app);
+		}
+		else {
+			outputFile.open(outputFilename);
+		}
+	}
+	ImGui::SameLine();
+	if(ImGui::Button("Close File")) {
+		outputFile.close();
+	}
+}
+
+void Interface::fileReadUI() {
+/*
+		std::cout << updateBuffer << std::endl;
+		ImGui::SameLine();
+		if(ImGui::Button("Save")) {
+			if(!outputFile.is_open()) {
+				outputFile.open(outputFilename);
+				outputFile << updateBuffer;
+			}
+			else {
+				outputFile.close();
+				outputFile.open(outputFilename);
+				outputFile << updateBuffer;
+			}
+		}
+*/
+
+		std::ifstream file(outputFilename);
+		std::stringstream buffer;
+		buffer << file.rdbuf();
+		fileContents = buffer.str();
+		textBuffer = std::vector<char>(fileContents.begin(), fileContents.end());
+		textBuffer.push_back('\0');
+		
+		ImGui::InputTextMultiline("##source", textBuffer.data(), textBuffer.size(), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), ImGuiInputTextFlags_AllowTabInput);
+		updateBuffer = textBuffer.data();
+}
