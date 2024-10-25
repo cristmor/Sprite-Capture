@@ -44,10 +44,12 @@ AppState::AppState() {
 	mData.texturePath = mPaths[0].string();
 	mData.textureTag = "textureTag";
 	mData.animationTag = "animationTag";
-	mData.count = 0;
+	mData.count = 1;
 	mData.speed = 0;
-	mData.size = 8 * SCALE;
+	mData.sizeX = 8;
+	mData.sizeY = 8;
 	mData.row = 1;
+	mData.column = 1;
 }
 
 AppState::~AppState() {

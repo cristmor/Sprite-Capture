@@ -78,12 +78,12 @@ void App::render() {
 	window->draw(sprite);
 	//window->draw(textureOutline);
 	window->draw(selectRect);
-	window->draw(boundingBox);
 	if(data.count) {
 		for(int i = 0;i < data.count;i++) {
 			window->draw(splitRects[i]);
 		}
 	}
+	window->draw(boundingBox);
 	ImGui::SFML::Render(*window);
 	window->display();
 }

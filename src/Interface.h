@@ -20,14 +20,10 @@ public:
 	ImVec2& pos() { return mPos; }
 	ImVec2& size() { return mSize; }
 private:
-	void imageSelectionUI();
-	void boxSettingUI();
-	void boundingBoxUI();
-	void dataValuesUI();
-	void readDataUI();
-
 	sf::Clock mClock;
 	int fileIndex = 0;
+
+	bool mCustomMode = false;
 
 	ImVec2 mPos;
 	ImVec2 mSize;

@@ -23,9 +23,11 @@ struct Data {
 	std::string animationTag;
 	int count;
 	int speed;
-	int size;
+	int sizeX;
+	int sizeY;
 	int row;
 	int column;
+	bool isCustom;
 };
 
 class AppState {
