@@ -78,8 +78,8 @@ void App::render() {
 	window->draw(sprite);
 	//window->draw(textureOutline);
 	window->draw(selectRect);
-	if(data.count) {
-		for(int i = 0;i < data.count;i++) {
+	if(data.split) {
+		for(int i = 0;i < data.split;i++) {
 			window->draw(splitRects[i]);
 		}
 	}

@@ -22,6 +22,7 @@ struct Data {
 	std::string textureTag;
 	std::string animationTag;
 	int count;
+	int split;
 	int speed;
 	int sizeX;
 	int sizeY;

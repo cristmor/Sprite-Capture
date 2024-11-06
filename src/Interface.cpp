@@ -1,4 +1,5 @@
 #include "Interface.h"
+#include "imgui.h"
 
 Interface::Interface() {
 	auto& window = AppState::getInstance().window();
@@ -99,7 +100,7 @@ void Interface::update() {
 	}
 	ImGui::SliderInt("Set Row", &row, 1, maxRow);
 	ImGui::SliderInt("Set Column", &column, 1, maxColumn);
-	ImGui::SliderInt("Set Splits", &data.count, 1, 10);
+	ImGui::SliderInt("Set Splits", &data.split, 1, 10);
 	ImGui::EndDisabled();
 
 
@@ -153,7 +154,7 @@ void Interface::update() {
 		selectRect.setPosition({ 0,0 });
 		selectRect.setSize({ 8 * SCALE, 8 * SCALE});
 		sizeIndex = Size_8;
-		data.count = 1;
+		data.split = 1;
 		row = 1;
 		column = 1;
 		fullWidthSelect = false;
@@ -186,9 +187,9 @@ void Interface::update() {
 	if(fullHeightSelect) {
 		selectRect.setSize({ selectRect.getSize().x, texture.getSize().y * SCALE });
 	}
-	for(int i = 1; i <= data.count;i++) {
+	for(int i = 1; i <= data.split;i++) {
 		splitRects[i-1].setPosition(selectRect.getPosition());
-		splitRects[i-1].setSize({(selectRect.getSize().x/data.count)*i, selectRect.getSize().y});
+		splitRects[i-1].setSize({(selectRect.getSize().x/data.split)*i, selectRect.getSize().y});
 	}
 
 	//
@@ -259,7 +260,7 @@ void Interface::update() {
 
 	// Data
 	boundingBox.setOrigin({boundingBox.getSize().x/2.0f, boundingBox.getSize().y/2.0f});
-	boundingBox.setPosition({selectRect.getPosition().x + selectRect.getSize().x/(2.0f * data.count) + pos[0], selectRect.getPosition().y + selectRect.getSize().y/2.0f + pos[1]});
+	boundingBox.setPosition({selectRect.getPosition().x + selectRect.getSize().x/(2.0f * data.split) + pos[0], selectRect.getPosition().y + selectRect.getSize().y/2.0f + pos[1]});
 	boundingBox.setSize({static_cast<float>(boundingSize[0]), static_cast<float>(boundingSize[1])});
 
 	//
@@ -278,6 +279,7 @@ void Interface::update() {
 	data.animationTag = buf;
 
 	ImGui::InputInt("Speed", &data.speed);
+	ImGui::SliderInt("Count", &data.count, 1, data.split);
 
 	std::string condition = ((dataFile.is_open()) ? "(Opened)": "(Closed)");
 	std::strncpy(buf, dataFilename.c_str(), 32);
@@ -302,7 +304,7 @@ void Interface::update() {
 				   << data.isCustom << " "
 				   << boundingBox.getSize().x/SCALE<< " "
 				   << boundingBox.getSize().y/SCALE<< " "
-				   << ((data.count) ? (boundingBox.getPosition().x - (selectRect.getPosition().x + selectRect.getSize().x/(2.0f * data.count)))/SCALE : 0) << " "
+				   << ((data.split) ? (boundingBox.getPosition().x - (selectRect.getPosition().x + selectRect.getSize().x/(2.0f * data.split)))/SCALE : 0) << " "
 				   << (boundingBox.getPosition().y - (selectRect.getPosition().y + selectRect.getSize().y/2.0f))/SCALE<< " "
 				   << paths[fileIndex].string() << std::endl;
 
@@ -319,7 +321,7 @@ void Interface::update() {
 				   << data.isCustom << " "
 				   << boundingBox.getSize().x/SCALE << " "
 				   << boundingBox.getSize().y/SCALE << " "
-				   << ((data.count) ? (boundingBox.getPosition().x - (selectRect.getPosition().x + selectRect.getSize().x/(2.0f * data.count)))/SCALE : 0) << " "
+				   << ((data.split) ? (boundingBox.getPosition().x - (selectRect.getPosition().x + selectRect.getSize().x/(2.0f * data.split)))/SCALE : 0) << " "
 				   << (boundingBox.getPosition().y - (selectRect.getPosition().y + selectRect.getSize().y/2.0f))/SCALE << " "
 				   << paths[fileIndex].string() << std::endl;
 		}
